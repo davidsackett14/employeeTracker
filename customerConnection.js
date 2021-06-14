@@ -233,29 +233,24 @@ const addDepartment = () => {
   inquirer
     .prompt([
       {
-        name: "firstName",
+        name: "name",
         type: "input",
-        message: "Please enter employee first name",
+        message: "Please enter new department name",
       },
-      {
-        name: "lastName",
-        type: "input",
-        message: "Please enter employee last name",
-      },
-      {
-        name: "role",
-        type: "rawlist",
-        message: "Please select employee role",
-        choices: ["words", "words2"],
-      },
-      {
-        name: "managerSelect",
-        type: "rawlist",
-        message: "Please select employee manager",
-        choices: ["words", "words2"],
-      },
+     
     ])
-    .then(start);
+    .then(data => {
+      const departmentObject = data;
+      console.log(departmentObject);
+      const departmentRow = `INSERT INTO department (name) VALUES ('${departmentObject.name}');`;
+      const departmentAddToTable = () =>
+        connection.query(departmentRow, (err, res) => {
+          if (err) throw err;
+          console.log("department added successfully");
+          console.table(departmentObject);
+        });
+      departmentAddToTable();
+    });
 };
 connection.connect(err => {
   if (err) throw err;
