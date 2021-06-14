@@ -252,6 +252,20 @@ const addDepartment = () => {
       departmentAddToTable();
     });
 };
+const viewEmployee = async () => {
+  const allEmployeeQuery = "SELECT * FROM employee";
+  await connection.query(allEmployeeQuery, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+  });
+};
+
+// const viewDepartment = "";
+
+// const viewRole = "";
+
+
+
 connection.connect(err => {
   if (err) throw err;
   // run the start function after the connection is made to prompt the user
