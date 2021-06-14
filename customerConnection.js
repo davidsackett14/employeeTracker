@@ -260,9 +260,21 @@ const viewEmployee = async () => {
   });
 };
 
-// const viewDepartment = "";
+const viewDepartment =  async () => {
+  const allDepartmentQuery = "SELECT * FROM department";
+  await connection.query(allDepartmentQuery, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+  });
+};;
 
-// const viewRole = "";
+const viewRole = async () => {
+  const allRoleQuery = "SELECT * FROM role";
+  await connection.query(allRoleQuery, (err, res) => {
+    if (err) throw err;
+    console.table(res);
+  });
+};
 
 
 
