@@ -1,25 +1,26 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 const util = require("util");
+const cTable = require('console.table');
 
 // const cTable = require("console.table");
 const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   port: 3306,
-  password: "",
+  password: ":b.RW!cYRVf3PBv",
   database: "employee_db",
 });
 
 // const employeeRole = [];
 
 // const managers = [];
-let managers = () => {
-  connection.query("SELECT title FROM role", (err, res) => {
-    if (err) throw err;
-    console.log(res);
-  });
-};
+// let managers = () => {
+//   connection.query("SELECT title FROM role", (err, res) => {
+//     if (err) throw err;
+//     console.log(res);
+//   });
+// };
 
 const start = () => {
   inquirer
@@ -115,10 +116,13 @@ const newEmployee = async () => {
   connection.query = await util.promisify(connection.query);
 
   const roles = await connection.query("SELECT title FROM role");
+  console.table(roles)
   console.log(roles);
+  //  const roles = await connection.query("SELECT title FROM role");
+  // console.log(roles);
 
   const managerSelection = await connection.query(
-    "SELECT first_name, last_name FROM employee WHERE role_id = 4"
+    "SELECT first_name, last_name FROM employee WHERE role_id = 1"
   );
   console.log(managerSelection);
   connection.query("SELECT * FROM employee", (err, res) => {
@@ -150,11 +154,44 @@ const newEmployee = async () => {
             ...managerSelection.map(
               manager => manager.first_name + " " + manager.last_name
             ),
-            ,
+            "none",
           ],
         },
       ])
-      .then(start);
+      .then(data => {
+        const employeeObject = data;
+        const roleID = ()=>{
+          switch (data.role) {
+            case "Manager":
+              return 1;
+              break;
+              case "Sales-person":
+              return 2;
+              break;
+              case "Trainer":
+              return 3;
+              break;
+              case "Line_worker":
+              return 4;
+              break;
+          
+            default:
+              break;
+          }
+
+        };
+        
+   
+        const employeeRow =  `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${employeeObject.firstName}','${employeeObject.lastName}', ${roleID()},1);`
+        const employeeAddToTable = ()=> connection.query(employeeRow, (err, res)=>{
+          if (err) throw err;
+          console.log("row added successfully")
+
+        }
+          
+        );
+        employeeAddToTable()
+      });
   });
 };
 
@@ -176,12 +213,21 @@ const newRole = () => {
           return valid || "Please enter a number";
         },
         filter: Number,
-      },
-      {
-        name: "roleDepartment",
-      },
+      }
+     
     ])
-    .then(start);
+    .then(data => {
+      const roleObject = data
+      console.log(roleObject)
+      const roleRow =  `INSERT INTO role (title, salary, department_id) VALUES ('${roleObject.roleName}',${roleObject.rolePay},1);`
+      const roleAddToTable = ()=> connection.query(roleRow, (err, res)=>{
+        if (err) throw err;
+        console.log("row added successfully");
+        console.table(roleObject)
+        
+      });
+      roleAddToTable()
+  });
 };
 const addDepartment = () => {
   inquirer
