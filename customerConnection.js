@@ -2,25 +2,19 @@ const mysql = require("mysql");
 const inquirer = require("inquirer");
 const util = require("util");
 const cTable = require('console.table');
+const { connect } = require("http2");
+require('dotenv').config();
 
 // const cTable = require("console.table");
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  port: 3306,
-  password: ":b.RW!cYRVf3PBv",
-  database: "employee_db",
+  host: process.env.HOST,
+  user: process.env.USER,
+  port: process.env.PORT,
+  password: process.env.PASSWORD,
+  database: process.env.DATABASE,
 });
 
-// const employeeRole = [];
 
-// const managers = [];
-// let managers = () => {
-//   connection.query("SELECT title FROM role", (err, res) => {
-//     if (err) throw err;
-//     console.log(res);
-//   });
-// };
 
 const start = () => {
   inquirer
@@ -91,25 +85,89 @@ const viewSelect = () => {
       }
     });
 };
-const updateEmployee = () => {
-  inquirer
+const updateEmployee = async () => {
+  
+  connection.query = await util.promisify(connection.query);
+  const roles = await connection.query("SELECT title FROM role");
+  const employeeQuery = "SELECT * FROM employee";
+  const employeeList = await connection.query("SELECT * FROM employee");
+  const managerSelection = await connection.query(
+    "SELECT first_name, last_name FROM employee WHERE role_id = 1"
+  );
+  
+ connection.query(employeeQuery, (err, res)=>{
+   if (err) throw err;
+    inquirer
     .prompt({
-      name: "tableRowAdd",
+      name: "employeeSelect",
       type: "rawlist",
-      message: "what would you like to add",
-      choices: ["New Employee", "New Department", "New Role"],
+      message: "which employee would you like to update",
+      choices:[
+        ...employeeList.map(
+          employee => employee.first_name + " " + employee.last_name
+        ),
+        "none",
+      ],
     })
-    .then(selection => {
-      if (selection.tableRowAdd === "New Employee") {
-        newEmployee();
-      } else if (selection.tableRowAdd === "New Department") {
-        addDepartment();
-      } else if (selection.tableRowAdd === "New Role") {
-        newRole();
-      } else {
-        start();
+    .then(async data=> {
+      connection.query = await util.promisify(connection.query);
+      const firstName =data.employeeSelect.split(" ")[0];
+      const lastName =data.employeeSelect.split(" ")[1];
+      console.log(firstName)
+      const selectedEmployeeQuery = `SELECT * FROM employee WHERE first_name = '${firstName}' AND last_name= '${lastName}' `;
+      const selectedEmployee = await connection.query(selectedEmployeeQuery)
+      console.log(selectedEmployee);
+      inquirer
+      .prompt([
+        // {
+        //   name: "firstName",
+        //   type: "input",
+        //   message: "Please enter employee first name",
+        // },
+        // {
+        //   name: "lastName",
+        //   type: "input",
+        //   message: "Please enter employee last name",
+        // },
+        {
+        name: "role",
+        type: "rawlist",
+        message: "Please select employee role",
+        choices: [...roles.map(role => role.title)],
+      },
+
+      {
+        name: "manager",
+        type: "rawlist",
+        message: "select the employees manager",
+        choices: [
+          ...managerSelection.map(
+            manager => manager.first_name + " " + manager.last_name
+          ),
+          "none",]
       }
-    });
+    ]).then(async data=>{
+      const roleID = await connection.query(`SELECT id FROM role WHERE title = '${data.role}'; ` );
+      console.log(roleID);
+      const managerFirst= data.manager.split(" ")[0];
+      const managerLast= data.manager.split(" ")[1];
+      console.log(managerFirst)
+      console.log(managerLast)
+      const manID = await connection.query(`SELECT id FROM employee WHERE first_name = '${managerFirst}' AND last_name= '${managerLast}' ;` );
+      console.log(manID[0].id)
+      console.log(firstName)
+      const employeeUpdateQuery = `UPDATE employee SET role_id =2, manager_id = 1, WHERE first_name= '${firstName}';`;
+      connection.query(employeeUpdateQuery,(err, res)=>{
+        if (err) throw err;
+        console.log("we updated an employee")
+      })
+    })
+
+      
+
+    }); 
+  })
+ 
 };
 
 const newEmployee = async () => {
