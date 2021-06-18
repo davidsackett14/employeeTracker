@@ -147,20 +147,25 @@ const updateEmployee = async () => {
           "none",]
       }
     ]).then(async data=>{
-      const roleID = await connection.query(`SELECT id FROM role WHERE title = '${data.role}'; ` );
-      console.log(roleID);
-      const managerFirst= data.manager.split(" ")[0];
-      const managerLast= data.manager.split(" ")[1];
-      console.log(managerFirst)
-      console.log(managerLast)
-      const manID = await connection.query(`SELECT id FROM employee WHERE first_name = '${managerFirst}' AND last_name= '${managerLast}' ;` );
-      console.log(manID[0].id)
-      console.log(firstName)
-      const employeeUpdateQuery = `UPDATE employee SET role_id =2, manager_id = 1, WHERE first_name= '${firstName}';`;
-      connection.query(employeeUpdateQuery,(err, res)=>{
-        if (err) throw err;
-        console.log("we updated an employee")
-      })
+     console.log(data);
+     const managerFirst = data.manager.split(" ")[0];
+     const managerLast = data.manager.split(" ")[1];
+     const manIDobject = await connection.query(
+       `SELECT id FROM employee WHERE first_name = '${managerFirst}' AND last_name= '${managerLast}' ;`
+     );
+     const roleIDobject = await connection.query(
+       `SELECT id FROM role WHERE title = '${data.role}' ;`
+     );
+     const roleId = roleIDobject[0].id;
+     const manId = manIDobject[0].id;
+     console.log(manId);
+     console.log(roleId);
+     const employeeUpdateQuery = `UPDATE employee SET role_id =${roleId}, manager_id = ${manId} WHERE first_name= '${firstName}';`;
+     connection.query(employeeUpdateQuery, (err, res) => {
+       if (err) throw err;
+       console.log("we updated an employee");
+       start();
+     });
     })
 
       
@@ -174,15 +179,14 @@ const newEmployee = async () => {
   connection.query = await util.promisify(connection.query);
 
   const roles = await connection.query("SELECT title FROM role");
-  console.table(roles)
-  console.log(roles);
+ 
   //  const roles = await connection.query("SELECT title FROM role");
   // console.log(roles);
 
   const managerSelection = await connection.query(
     "SELECT first_name, last_name FROM employee WHERE role_id = 1"
   );
-  console.log(managerSelection);
+ 
   connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
     inquirer
@@ -216,35 +220,26 @@ const newEmployee = async () => {
           ],
         },
       ])
-      .then(data => {
+      .then(async data => {
+        console.log(data);
+        const managerFirst = data.manager.split(" ")[0];
+        const managerLast = data.manager.split(" ")[1];
         const employeeObject = data;
-        const roleID = ()=>{
-          switch (data.role) {
-            case "Manager":
-              return 1;
-              break;
-              case "Sales-person":
-              return 2;
-              break;
-              case "Trainer":
-              return 3;
-              break;
-              case "Line_worker":
-              return 4;
-              break;
-          
-            default:
-              break;
-          }
-
-        };
-        
-   
-        const employeeRow =  `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${employeeObject.firstName}','${employeeObject.lastName}', ${roleID()},1);`
+        const manIDobject = await connection.query(
+          `SELECT id FROM employee WHERE first_name = '${managerFirst}' AND last_name= '${managerLast}' ;`
+        );
+        const manId = manIDobject[0].id;
+        const roleIDobject = await connection.query(
+          `SELECT id FROM role WHERE title = '${data.role}' ;`
+        );
+        console.log(roleIDobject);
+        const roleId = roleIDobject[0].id;
+       
+        const employeeRow =  `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${employeeObject.firstName}','${employeeObject.lastName}', ${roleId},${manId});`
         const employeeAddToTable = ()=> connection.query(employeeRow, (err, res)=>{
           if (err) throw err;
           console.log("row added successfully")
-
+          start();
         }
           
         );
@@ -282,6 +277,7 @@ const newRole = () => {
         if (err) throw err;
         console.log("row added successfully");
         console.table(roleObject)
+        start();
         
       });
       roleAddToTable()
@@ -306,6 +302,7 @@ const addDepartment = () => {
           if (err) throw err;
           console.log("department added successfully");
           console.table(departmentObject);
+          start();
         });
       departmentAddToTable();
     });
@@ -315,6 +312,7 @@ const viewEmployee = async () => {
   await connection.query(allEmployeeQuery, (err, res) => {
     if (err) throw err;
     console.table(res);
+    start();
   });
 };
 
@@ -323,6 +321,7 @@ const viewDepartment =  async () => {
   await connection.query(allDepartmentQuery, (err, res) => {
     if (err) throw err;
     console.table(res);
+    start();
   });
 };;
 
@@ -331,6 +330,7 @@ const viewRole = async () => {
   await connection.query(allRoleQuery, (err, res) => {
     if (err) throw err;
     console.table(res);
+    start();
   });
 };
 
